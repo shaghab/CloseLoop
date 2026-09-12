@@ -14,6 +14,8 @@
 
     <main>
       <button id="analyze">Analyze selected conversation</button>
+      <button id="check-progress" class="secondary" hidden>Check progress</button>
+      <p id="tracking" class="tracking" hidden></p>
       <p id="message" role="status" aria-live="polite"></p>
 
       <section id="result" class="result" hidden>
@@ -29,6 +31,16 @@
         <div class="card"><h2>Next step</h2><p id="next-step"></p></div>
 
         <button id="copy" class="secondary">Copy closure message</button>
+        <button id="track" class="secondary">Track this</button>
+      </section>
+
+      <section id="progress-result" class="result" hidden>
+        <div class="status-card"><h2>Progress</h2><strong id="progress-summary"></strong></div>
+        <div class="card"><h2>Actions</h2><ul id="progress-actions"></ul></div>
+        <div class="card"><h2>New decisions</h2><ul id="new-decisions"></ul></div>
+        <div class="card"><h2>New risks</h2><ul id="new-risks"></ul></div>
+        <div class="card"><h2>Next step</h2><p id="progress-next-step"></p></div>
+        <button id="stop-tracking" class="secondary">Stop tracking</button>
       </section>
     </main>
 
