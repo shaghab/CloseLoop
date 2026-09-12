@@ -1,7 +1,7 @@
 import http from "node:http";
 import OpenAI from "openai";
 
-const port = process.env.PORT || 3000;
+const port = 3000;
 const extensionOrigin = process.env.CLOSELOOP_EXTENSION_ORIGIN;
 const client = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -66,6 +66,7 @@ const server = http.createServer((request, response) => {
   }
 
   let rawBody = "";
+  request.setEncoding("utf8");
   request.on("data", (chunk) => { rawBody += chunk; });
   request.on("end", async () => {
     try {
