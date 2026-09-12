@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000/analyze";
+const API_URL = "http://127.0.0.1:3000/analyze";
 const analyzeButton = document.querySelector("#analyze");
 const copyButton = document.querySelector("#copy");
 const message = document.querySelector("#message");
