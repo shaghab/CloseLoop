@@ -36,6 +36,7 @@ button {
 button:hover { background: #285898; }
 button:disabled { cursor: wait; opacity: .65; }
 .secondary { margin-top: 4px; background: #243b64; }
+.tracking { margin: 9px 2px 0; color: #647184; font-size: 13px; }
 #message { margin: 10px 2px 0; color: #a23a35; }
 #message:empty { display: none; }
 
@@ -61,3 +62,4 @@ p, ul { margin: 0; line-height: 1.4; }
 ul { padding-left: 19px; }
 li + li { margin-top: 3px; }
 #status { font-size: 17px; }
+#progress-actions li { white-space: pre-line; }

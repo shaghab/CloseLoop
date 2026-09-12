@@ -45,6 +45,42 @@ const schema = {
   }
 };
 
+const progressInstructions = `You compare previous workplace commitments with a newer conversation. For every previous action, return exactly one result:
+- DONE only with reasonable evidence that the action was completed.
+- OPEN with reasonable evidence that it remains pending or unresolved.
+- UNCLEAR when the new conversation lacks enough evidence.
+Mentioning a topic is not evidence of completion. Never invent progress. Identify only genuinely new decisions and genuinely new risks; do not repeat old ones unless their status materially changed. Recommend the smallest useful next step. Return concise JSON matching the supplied schema.`;
+
+const progressSchema = {
+  name: "follow_up_progress",
+  strict: true,
+  schema: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      summary: { type: "string" },
+      actions: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            action: { type: "string" },
+            owner: { type: ["string", "null"] },
+            status: { type: "string", enum: ["DONE", "OPEN", "UNCLEAR"] },
+            evidence: { type: "string" }
+          },
+          required: ["action", "owner", "status", "evidence"]
+        }
+      },
+      newDecisions: { type: "array", items: { type: "string" } },
+      newRisks: { type: "array", items: { type: "string" } },
+      nextStep: { type: "string" }
+    },
+    required: ["summary", "actions", "newDecisions", "newRisks", "nextStep"]
+  }
+};
+
 function send(response, status, body, origin) {
   response.writeHead(status, {
     "Content-Type": "application/json",
@@ -61,7 +97,7 @@ const server = http.createServer((request, response) => {
     return send(response, 403, { error: "Request origin is not allowed." });
   }
   if (request.method === "OPTIONS") return send(response, 204, {}, origin);
-  if (request.method !== "POST" || request.url !== "/analyze") {
+  if (request.method !== "POST" || !["/analyze", "/check-progress"].includes(request.url)) {
     return send(response, 404, { error: "Not found." }, origin);
   }
 
@@ -70,18 +106,23 @@ const server = http.createServer((request, response) => {
   request.on("data", (chunk) => { rawBody += chunk; });
   request.on("end", async () => {
     try {
-      const { text } = JSON.parse(rawBody || "{}");
+      const body = JSON.parse(rawBody || "{}");
+      const checkingProgress = request.url === "/check-progress";
+      const text = checkingProgress ? body.newText : body.text;
       if (!text?.trim()) return send(response, 400, { error: "No conversation text provided." }, origin);
+      if (checkingProgress && !body.previous) return send(response, 400, { error: "No tracked conversation provided." }, origin);
       if (!client) return send(response, 500, { error: "OPENAI_API_KEY is not configured." }, origin);
 
       const completion = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4o-mini",
         temperature: 0.1,
         messages: [
-          { role: "system", content: instructions },
-          { role: "user", content: text }
+          { role: "system", content: checkingProgress ? progressInstructions : instructions },
+          { role: "user", content: checkingProgress
+            ? JSON.stringify({ previous: body.previous, newConversation: text })
+            : text }
         ],
-        response_format: { type: "json_schema", json_schema: schema }
+        response_format: { type: "json_schema", json_schema: checkingProgress ? progressSchema : schema }
       });
 
       const message = completion.choices[0]?.message;
