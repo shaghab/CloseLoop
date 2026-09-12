@@ -41,6 +41,7 @@ function showResult(result) {
 function updateTrackingControls() {
   const tracking = document.querySelector("#tracking");
   checkProgressButton.hidden = !trackedConversation;
+  stopTrackingButton.hidden = !trackedConversation;
   tracking.hidden = !trackedConversation;
   tracking.textContent = trackedConversation
     ? `Tracking ${trackedConversation.actions.length} action${trackedConversation.actions.length === 1 ? "" : "s"}`
