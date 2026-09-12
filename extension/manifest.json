@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "CloseLoop",
+  "version": "0.1.0",
+  "description": "Turn selected workplace conversations into clear commitments.",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["http://localhost:3000/*"],
+  "action": {
+    "default_title": "CloseLoop",
+    "default_popup": "popup.html"
+  }
+}
