@@ -2,6 +2,7 @@ import http from "node:http";
 import OpenAI from "openai";
 
 const port = process.env.PORT || 3000;
+const extensionOrigin = process.env.CLOSELOOP_EXTENSION_ORIGIN;
 const client = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
@@ -44,10 +45,10 @@ const schema = {
   }
 };
 
-function send(response, status, body) {
+function send(response, status, body, origin) {
   response.writeHead(status, {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
+    ...(origin ? { "Access-Control-Allow-Origin": origin, "Vary": "Origin" } : {}),
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Methods": "POST, OPTIONS"
   });
@@ -55,9 +56,13 @@ function send(response, status, body) {
 }
 
 const server = http.createServer((request, response) => {
-  if (request.method === "OPTIONS") return send(response, 204, {});
+  const origin = request.headers.origin;
+  if (!extensionOrigin || origin !== extensionOrigin) {
+    return send(response, 403, { error: "Request origin is not allowed." });
+  }
+  if (request.method === "OPTIONS") return send(response, 204, {}, origin);
   if (request.method !== "POST" || request.url !== "/analyze") {
-    return send(response, 404, { error: "Not found." });
+    return send(response, 404, { error: "Not found." }, origin);
   }
 
   let rawBody = "";
@@ -65,8 +70,8 @@ const server = http.createServer((request, response) => {
   request.on("end", async () => {
     try {
       const { text } = JSON.parse(rawBody || "{}");
-      if (!text?.trim()) return send(response, 400, { error: "No conversation text provided." });
-      if (!client) return send(response, 500, { error: "OPENAI_API_KEY is not configured." });
+      if (!text?.trim()) return send(response, 400, { error: "No conversation text provided." }, origin);
+      if (!client) return send(response, 500, { error: "OPENAI_API_KEY is not configured." }, origin);
 
       const completion = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4o-mini",
@@ -78,10 +83,15 @@ const server = http.createServer((request, response) => {
         response_format: { type: "json_schema", json_schema: schema }
       });
 
-      send(response, 200, JSON.parse(completion.choices[0].message.content));
+      const message = completion.choices[0]?.message;
+      if (message?.refusal || typeof message?.content !== "string") {
+        return send(response, 422, { error: "OpenAI declined to analyze this conversation." }, origin);
+      }
+
+      send(response, 200, JSON.parse(message.content), origin);
     } catch (error) {
       console.error(error);
-      send(response, 500, { error: "OpenAI analysis failed." });
+      send(response, 500, { error: "OpenAI analysis failed." }, origin);
     }
   });
 });
