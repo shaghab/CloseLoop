@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloseLoop</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <header>
+      <h1>CloseLoop</h1>
+      <p>Turn conversations into commitments.</p>
+    </header>
+
+    <main>
+      <button id="analyze">Analyze selected conversation</button>
+      <p id="message" role="status" aria-live="polite"></p>
+
+      <section id="result" class="result" hidden>
+        <div class="status-card">
+          <h2>Status</h2>
+          <strong id="status"></strong>
+        </div>
+
+        <div class="card"><h2>Decision</h2><p id="decision"></p></div>
+        <div class="card"><h2>Actions</h2><ul id="actions"></ul></div>
+        <div class="card"><h2>Open questions</h2><ul id="questions"></ul></div>
+        <div class="card"><h2>Risks</h2><ul id="risks"></ul></div>
+        <div class="card"><h2>Next step</h2><p id="next-step"></p></div>
+
+        <button id="copy" class="secondary">Copy closure message</button>
+      </section>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
